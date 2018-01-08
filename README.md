@@ -1,18 +1,16 @@
 # sbt-dapeng 插件使用指南
 
-标签（空格分隔）： 未分类
-
 目录：
-    > 1. sbt-dapeng插件能干什么
-    > 2. sbt-dapeng插件怎么用
-    >   2.1 使用sbt-dapeng快速启动测试hello项目
-    >   2.2 自定义自己的项目
-    > 3. sbt-dapeng提供的指令详细说明
-    >   3.1 ```sbt new```
-    >   3.2 ```sbt docker```
-    >   3.3 ```compile``` (内置了thrift生成功能)
-    >   3.4 ```sbt runContainer```
-    >   3.5 ```sbt test```
+> 1. sbt-dapeng插件能干什么
+> 2. sbt-dapeng插件怎么用
+>   2.1 使用sbt-dapeng快速启动测试hello项目
+>   2.2 自定义自己的项目
+> 3. sbt-dapeng提供的指令详细说明
+>   3.1 ```sbt new```
+>   3.2 ```sbt docker```
+>   3.3 ```compile``` (内置了thrift生成功能)
+>   3.4 ```sbt runContainer```
+>   3.5 ```sbt test```
 
 ### sbt-dapeng插件能干什么
     sbt-dapeng 插件提供了以下几个功能
