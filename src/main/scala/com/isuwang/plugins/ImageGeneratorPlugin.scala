@@ -26,9 +26,9 @@ object ImageGeneratorPlugin extends AutoPlugin {
           val properties = new Properties()
           properties.load(new FileInputStream(propertiesFile))
           val version=properties.getProperty("dapeng.version")
-          if(version!=null) version else "1.2.2"
+          if(version!=null) version else "2.0.0-SNAPSHOT"
         }
-        from("docker.oa.isuwang.com:5000/system/dapeng-container:"+dapengVersion)
+        from("dapengsoa/dapeng-container:"+dapengVersion)
 
         val containerHome = "/dapeng-container"
         run("mkdir", "-p", containerHome)
@@ -41,10 +41,11 @@ object ImageGeneratorPlugin extends AutoPlugin {
         )
         val projectName:String= name.value;
         run("mkdir","-p","/apps/"+projectName)
-        copy(appDependency, containerHome + "/apps/"+projectName+"/")
         copy(startupFile, containerHome + "/bin/")
         run("chmod", "+x", containerHome + "/bin/startup.sh")
         workDir(containerHome + "/bin")
+
+        copy(appDependency, containerHome + "/apps/"+projectName+"/")
 
         cmd("/bin/sh", "-c", containerHome + "/bin/startup.sh && tail -F " + containerHome + "/bin/startup.sh")
       }
@@ -52,7 +53,7 @@ object ImageGeneratorPlugin extends AutoPlugin {
 
     imageNames in docker := Seq (
       ImageName(
-        namespace = Some("docker.oa.isuwang.com:5000/product"),
+        namespace = Some("dapengsoa/biz"),
         repository = name.value,
         tag = Some(git.gitHeadCommit.value match { case Some(tag) => tag.substring(0, 7) case None => "latest" })
       )
