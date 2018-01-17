@@ -29,7 +29,7 @@ object DbGeneratorUtil {
           item match {
             case singleEnumRegx(index, cnChars, enChars) =>
 
-//              println(s"foundEnumValue ${columnName} =>  index: ${index}  cnChars:${cnChars}  enChars: ${enChars}")
+              //              println(s"foundEnumValue ${columnName} =>  index: ${index}  cnChars:${cnChars}  enChars: ${enChars}")
               (index, enChars)
             case _ => throw new ParseException(s"invalid enum format: ${columnName} -> ${item} should looks like Int:xxx(englishWord)", 0)
           }
@@ -51,7 +51,7 @@ object DbGeneratorUtil {
   }
 
 
-  def toDbClassTemplate(tableName: String, packageName: String, columns: List[(String, String, String,String)]) = {
+  def toDbClassTemplate(tableName: String, packageName: String, columns: List[(String, String, String, String)]) = {
     val sb = new StringBuilder(256)
     val className = toFirstUpperCamel(tableNameConvert(tableName))
     sb.append(s" package ${packageName}.entity \r\n")
@@ -69,7 +69,7 @@ object DbGeneratorUtil {
       val hasValidEnum: Boolean = !getEnumFields(column._1, column._3).isEmpty
       sb.append(s" /** ${column._3} */ \r\n")
       sb.append(toCamel(keywordConvert(column._1))).append(": ").append(
-        if (hasValidEnum)toFirstUpperCamel(tableNameConvert(tableName)) + toFirstUpperCamel(column._1) else toScalaFieldType(column._2,column._4)
+        if (hasValidEnum) toFirstUpperCamel(tableNameConvert(tableName)) + toFirstUpperCamel(column._1) else toScalaFieldType(column._2, column._4)
       ).append(",\r\n")
     })
     if (sb.contains(",")) sb.delete(sb.lastIndexOf(","), sb.lastIndexOf(",") + 1)
@@ -154,7 +154,6 @@ object DbGeneratorUtil {
     sb.append(s" def unapply(v: ${enumClassName}): Option[Int] = Some(v.id) \r\n")
 
 
-
     sb.append(s" implicit object Accessor extends DbEnumJdbcValueAccessor[${enumClassName}](valueOf) \r\n")
 
     sb.append("}")
@@ -162,17 +161,17 @@ object DbGeneratorUtil {
     sb.toString()
   }
 
-  def getTableColumnInfos(tableName: String, db: String, connection: Connection): List[(String, String, String,String)] = {
+  def getTableColumnInfos(tableName: String, db: String, connection: Connection): List[(String, String, String, String)] = {
 
-    val columns: ResultSet = connection.getMetaData.getColumns("",db,tableName,"")
+    val columns: ResultSet = connection.getMetaData.getColumns("", db, tableName, "")
 
-    val columnInfos = mutable.MutableList[(String, String, String,String)]()
+    val columnInfos = mutable.MutableList[(String, String, String, String)]()
     while (columns.next()) {
       val columnName = columns.getString("COLUMN_NAME")
       val columnDataType = columns.getString("TYPE_NAME")
       val columnComment = columns.getString("REMARKS")
       val columnNullable = columns.getString("IS_NULLABLE")
-      val columnInfo = (columnName,columnDataType,columnComment,columnNullable)
+      val columnInfo = (columnName, columnDataType, columnComment, columnNullable)
       columnInfos += columnInfo
     }
 
@@ -254,7 +253,7 @@ object DbGeneratorUtil {
 
   def toScalaFieldType(tableFieldType: String, isNullable: String): String = {
     val dataType = tableFieldType.toUpperCase() match {
-      case "INT" | "SMALLINT" | "TINYINT" | "INT UNSIGNED"| "SMALLINT UNSIGNED"| "TINYINT UNSIGNED" => "Int"
+      case "INT" | "SMALLINT" | "TINYINT" | "INT UNSIGNED" | "SMALLINT UNSIGNED" | "TINYINT UNSIGNED" => "Int"
       case "BIGINT" => "Long"
       case "CHAR" | "VARCHAR" => "String"
       case "DECIMAL" | "DOUBLE" | "FLOAT" => "BigDecimal"
@@ -284,17 +283,17 @@ object DbGeneratorUtil {
 
 
   def getTableNamesByDb(db: String, connection: Connection) = {
-//    val sql = s"select table_name from information_schema.tables where table_schema='${db}' and table_type='base table'";
-//
-//    val sqlStatement = connection.prepareStatement(sql)
-//    val resultSet = sqlStatement.executeQuery()
-//    val tableNames = mutable.MutableList[String]()
-//    while (resultSet.next()) {
-//      val tableName = resultSet.getString("table_name")
-//      tableNames += tableName
-//    }
+    //    val sql = s"select table_name from information_schema.tables where table_schema='${db}' and table_type='base table'";
+    //
+    //    val sqlStatement = connection.prepareStatement(sql)
+    //    val resultSet = sqlStatement.executeQuery()
+    //    val tableNames = mutable.MutableList[String]()
+    //    while (resultSet.next()) {
+    //      val tableName = resultSet.getString("table_name")
+    //      tableNames += tableName
+    //    }
 
-    val tables = connection.getMetaData.getTables("",db,"",null)
+    val tables = connection.getMetaData.getTables("", db, "", null)
     val tableNames = mutable.MutableList[String]()
     while (tables.next()) {
       tableNames += tables.getString("TABLE_NAME")
