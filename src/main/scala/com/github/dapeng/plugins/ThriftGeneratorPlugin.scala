@@ -107,4 +107,56 @@ object ThriftGeneratorPlugin extends AutoPlugin {
     }
   }
 
+  /**
+    * 判断是否需要重新生产源文件的逻辑:
+    *
+    * 1. 如果 targetFilePath 不存在  => need regen
+    * 2. 如果 resourceFilePath 不存在 => need regen
+    * 3. 如果 resourceFilePath 没有xml 文件 => need regen
+    * 4. 如果 sourceFilePath 没有java文件或者 scala文件 => need regen
+    * 5. 如果 sourceFiles 任一修改时间 > (resourceFile + targetFiles) 的时间 => need regen
+    * 6. else false
+    * @param sourceFilePath
+    * @param targetFilePath
+    * @param resourceFilePath
+    */
+  private def needRegenerateFile(sourceFilePath: String, targetFilePath: String, resourceFilePath: String): Boolean = {
+    val sourceFolder = new File(sourceFilePath)
+    val targetFileFolder = new File(targetFilePath)
+    val resourceFileFolder = new File(resourceFilePath)
+
+    val needRegenerateFile: Boolean = if (!sourceFolder.exists()) { //1.如果 targetFilePath 不存在  => need regen
+      println(" sourceFolder not exists: regenerate sourceFiles............")
+      true
+    } else if (!resourceFileFolder.exists()) { //2.如果 resourceFilePath 不存在 => need regen
+      println(" resourceFileFolder not exists: regenerate sourceFiles............")
+      true
+    } else if (getFiles(resourceFileFolder).filter(_.getName.endsWith(".xml")).size <= 0) { //3. 如果 resourceFilePath 没有xml 文件 => need regen
+      println(" resourceFileFolder not exists xml files: regenerate sourceFiles............")
+      true
+    } else {
+      //4. 如果 sourceFilePath 没有java文件或者 scala文件 => need regen
+      val targetFiles = getFiles(targetFileFolder)
+      if (!targetFiles.exists(_.getName.endsWith("scala")) || !targetFiles.exists(_.getName.endsWith("java"))) {
+        println(" no java or scala file found : regenerate sourceFiles............")
+        true
+      } else {
+        val sourceFiles = getFiles(sourceFolder)
+        sourceFiles.foreach(f => println(s" sourceFile: ${f.getName}, modifyTime: ${f.lastModified()}"))
+
+        val generatedFiles = getFiles(resourceFileFolder) ++ getFiles(targetFileFolder)
+        //5. 如果 sourceFiles 任一修改时间 > (resourceFile + targetFiles) 的时间 => need regen
+        if (generatedFiles.exists(generatedFile => sourceFiles.exists(_.lastModified() > generatedFile.lastModified()))) {
+          println(" thrift source files updated : regenerate sourceFiles............")
+          true
+        } else {
+          false //6. else false
+        }
+      }
+
+    }
+
+    needRegenerateFile
+  }
+
 }
