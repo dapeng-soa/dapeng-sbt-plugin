@@ -63,22 +63,28 @@ object ThriftGeneratorPlugin extends AutoPlugin {
 
     println("Welcome to use generate plugin")
     val javaFileFolder = new File(targetFilePath + "/java")
-    if (!javaFileFolder.exists()) {
-      println(s" java file folder does no exists. create new one: ${javaFileFolder}")
-      javaFileFolder.mkdirs()
-    }
-    Scrooge.main(Array("-gen", "java", "-all",
-      "-in", sourceFilePath,
-      "-out", targetFilePath))
-
     val scalaFileFolder = new File(targetFilePath + "/scala")
-    if (!scalaFileFolder.exists()) {
-      println(s" java file folder does no exists. create new one: ${scalaFileFolder}")
-      scalaFileFolder.mkdirs()
+
+    if (needRegenerateFile(sourceFilePath: String, targetFilePath: String, resourceFilePath: String)) {
+      if (!javaFileFolder.exists()) {
+        println(s" java file folder does no exists. create new one: ${javaFileFolder}")
+        javaFileFolder.mkdirs()
+      }
+      Scrooge.main(Array("-gen", "java", "-all",
+        "-in", sourceFilePath,
+        "-out", targetFilePath))
+
+      if (!scalaFileFolder.exists()) {
+        println(s" java file folder does no exists. create new one: ${scalaFileFolder}")
+        scalaFileFolder.mkdirs()
+      }
+      Scrooge.main(Array("-gen", "scala", "-all",
+        "-in", sourceFilePath,
+        "-out", targetFilePath))
+    } else {
+      println("Thrift-Generator-Plugin:  No need to regenerate source files. skip..............")
     }
-    Scrooge.main(Array("-gen", "scala", "-all",
-      "-in", sourceFilePath,
-      "-out", targetFilePath))
+
 
     val oldResourceFile = new File(s"${targetFilePath}/resources")
     val resourceFiles = getFiles(oldResourceFile)
