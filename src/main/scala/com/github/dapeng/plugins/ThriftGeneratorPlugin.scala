@@ -81,26 +81,26 @@ object ThriftGeneratorPlugin extends AutoPlugin {
       Scrooge.main(Array("-gen", "scala", "-all",
         "-in", sourceFilePath,
         "-out", targetFilePath))
+
+      val oldResourceFile = new File(s"${targetFilePath}/resources")
+      val resourceFiles = getFiles(oldResourceFile)
+      val newResourcePath = resourceFilePath
+
+      resourceFiles.foreach(oldFile => {
+        val newFile = new File(newResourcePath + s"/${oldFile.getName}")
+        IO.copy(Traversable((oldFile, newFile)))
+      })
+
+      val newFiles = getFiles(new File(newResourcePath))
+
+      newFiles.foreach(f => println(s"new generatedFile: ${f.getAbsolutePath}"))
+
+      val oldFiles = new File(targetFilePath + "/resources")
+      if (oldFiles.isDirectory) oldFiles.delete()
+
     } else {
       println("Thrift-Generator-Plugin:  No need to regenerate source files. skip..............")
     }
-
-
-    val oldResourceFile = new File(s"${targetFilePath}/resources")
-    val resourceFiles = getFiles(oldResourceFile)
-    val newResourcePath = resourceFilePath
-
-    resourceFiles.foreach(oldFile => {
-      val newFile = new File(newResourcePath + s"/${oldFile.getName}")
-      IO.copy(Traversable((oldFile, newFile)))
-    })
-
-    val newFiles = getFiles(new File(newResourcePath))
-
-    newFiles.foreach(f => println(s"new generatedFile: ${f.getAbsolutePath}"))
-
-    val oldFiles = new File(targetFilePath + "/resources")
-    if (oldFiles.isDirectory) oldFiles.delete()
 
     getFiles(javaFileFolder) ++ getFiles(scalaFileFolder)
   }
