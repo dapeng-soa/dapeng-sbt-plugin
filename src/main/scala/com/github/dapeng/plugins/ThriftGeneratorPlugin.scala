@@ -26,10 +26,10 @@ object ThriftGeneratorPlugin extends AutoPlugin {
 
   def generateResourceFileTask = Def.task {
     lazy val targetFilePath = target.value + s"/scala-${scalaBinaryVersion.value}/resource_managed/main"
-    val sources: Seq[sbt.File] = generateFilesTask.value
+//    val sources: Seq[sbt.File] = generateFilesTask.value
     val files: Seq[File] = getFiles(new File(targetFilePath))
-    println("resource file size: " + files.size)
-    files.foreach(file => println(s" generated resource file: ${file.getAbsoluteFile}"))
+//    println("resource file size: " + files.size)
+//    files.foreach(file => println(s" generated resource file: ${file.getAbsoluteFile}"))
     files
   }
 
@@ -91,9 +91,9 @@ object ThriftGeneratorPlugin extends AutoPlugin {
         IO.copy(Traversable((oldFile, newFile)))
       })
 
-      val newFiles = getFiles(new File(newResourcePath))
+//      val newFiles = getFiles(new File(newResourcePath))
 
-      newFiles.foreach(f => println(s"new generatedFile: ${f.getAbsolutePath}"))
+//      newFiles.foreach(f => println(s"new generatedFile: ${f.getAbsolutePath}"))
 
       val oldFiles = new File(targetFilePath + "/resources")
       if (oldFiles.isDirectory) oldFiles.delete()
@@ -148,7 +148,7 @@ object ThriftGeneratorPlugin extends AutoPlugin {
         true
       } else {
         val sourceFiles = getFiles(sourceFolder)
-        sourceFiles.foreach(f => println(s" sourceFile: ${f.getName}, modifyTime: ${f.lastModified()}"))
+//        sourceFiles.foreach(f => println(s" sourceFile: ${f.getName}, modifyTime: ${f.lastModified()}"))
 
         val generatedFiles = getFiles(resourceFileFolder) ++ getFiles(targetFileFolder)
         //5. 如果 sourceFiles 任一修改时间 > (resourceFile + targetFiles) 的时间 => need regen
