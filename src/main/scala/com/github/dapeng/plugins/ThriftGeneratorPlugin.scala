@@ -5,41 +5,40 @@ import sbt.AutoPlugin
 import sbt.Keys.{resourceGenerators, _}
 import sbt._
 
-import scala.collection.immutable
-import scala.io._
+import java.io.File
 
 // ApiPlugin: idlc
 // ServicePlugin: dp-dist, dp-docker, dp-run
 object ThriftGeneratorPlugin extends AutoPlugin {
 
 
-  val generateFiles = taskKey[Seq[java.io.File]]("generate thrift file sources")
+  val generateFiles = taskKey[(Seq[File],Seq[File])]("generate thrift file sources")
   val resourceGenerateFiles = taskKey[Seq[java.io.File]]("generate thrift file sources")
 
-  def generateFilesTask = Def.task {
-    lazy val sourceFilesPath = (baseDirectory in Compile).value.getAbsolutePath + "/src/main/resources/thrifts"
-    lazy val targetFilePath = target.value + s"/scala-${scalaBinaryVersion.value}/src_managed/main"
-    lazy val resourceFilePath = target.value + s"/scala-${scalaBinaryVersion.value}/resource_managed/main"
-
-    generateFiles(sourceFilesPath, targetFilePath, resourceFilePath)
+  def generateSourceFilesTask = Def.task {
+    generateFiles.value._1
   }
 
   def generateResourceFileTask = Def.task {
-    lazy val targetFilePath = target.value + s"/scala-${scalaBinaryVersion.value}/resource_managed/main"
-//    val sources: Seq[sbt.File] = generateFilesTask.value
-    val files: Seq[File] = getFiles(new File(targetFilePath))
-//    println("resource file size: " + files.size)
-//    files.foreach(file => println(s" generated resource file: ${file.getAbsoluteFile}"))
-    files
+    generateFiles.value._2
+  }
+
+  def runIdlcTask = Def.task {
+    val sourceFilesPath = (baseDirectory in Compile).value.getAbsolutePath + "/src/main/resources/thrifts"
+    val srcManagedPath = target.value + s"/scala-${scalaBinaryVersion.value}/src_managed/main"
+    val resourceManagedPath = target.value + s"/scala-${scalaBinaryVersion.value}/resource_managed/main"
+
+    generateFiles(sourceFilesPath, srcManagedPath, resourceManagedPath)
   }
 
   override lazy val projectSettings = inConfig(Compile)(Seq(
-    generateFiles := generateFilesTask.value,
-    sourceGenerators += generateFiles.taskValue,
+    generateFiles := runIdlcTask.value,
+    sourceGenerators += generateSourceFilesTask.taskValue,
     resourceGenerators += generateResourceFileTask.taskValue,
+//    runIdlc := runIdlcTask.value,
 
     mappings in packageSrc ++= {
-      val allGenerated: immutable.Seq[sbt.File] = generateFilesTask.value
+      val allGenerated: Seq[File] = generateSourceFilesTask.value
       val javaPrefix = s"${target.value}/scala-${scalaBinaryVersion.value}/src_managed/main/java/"
       val scalaPrefix = s"${target.value}/scala-${scalaBinaryVersion.value}/src_managed/main/scala/"
 
@@ -59,20 +58,20 @@ object ThriftGeneratorPlugin extends AutoPlugin {
   ))
 
 
-  def generateFiles(sourceFilePath: String, targetFilePath: String, resourceFilePath: String) = {
+  def generateFiles(sourceFilePath: String, srcManagedPath: String, resourceManagedPath: String) = {
 
     println("Welcome to use generate plugin")
-    val javaFileFolder = new File(targetFilePath + "/java")
-    val scalaFileFolder = new File(targetFilePath + "/scala")
+    val javaFileFolder = new File(srcManagedPath + "/java")
+    val scalaFileFolder = new File(srcManagedPath + "/scala")
 
-    if (needRegenerateFile(sourceFilePath: String, targetFilePath: String, resourceFilePath: String)) {
+    if (needRegenerateFile(sourceFilePath: String, srcManagedPath: String, resourceManagedPath: String)) {
       if (!javaFileFolder.exists()) {
         println(s" java file folder does no exists. create new one: ${javaFileFolder}")
         javaFileFolder.mkdirs()
       }
       Scrooge.main(Array("-gen", "java", "-all",
         "-in", sourceFilePath,
-        "-out", targetFilePath))
+        "-out", srcManagedPath))
 
       if (!scalaFileFolder.exists()) {
         println(s" java file folder does no exists. create new one: ${scalaFileFolder}")
@@ -80,29 +79,28 @@ object ThriftGeneratorPlugin extends AutoPlugin {
       }
       Scrooge.main(Array("-gen", "scala", "-all",
         "-in", sourceFilePath,
-        "-out", targetFilePath))
+        "-out", srcManagedPath))
 
-      val oldResourceFile = new File(s"${targetFilePath}/resources")
+      val oldResourceFile = new File(s"${srcManagedPath}/resources")
       val resourceFiles = getFiles(oldResourceFile)
-      val newResourcePath = resourceFilePath
+      val newResourcePath = resourceManagedPath
 
       resourceFiles.foreach(oldFile => {
         val newFile = new File(newResourcePath + s"/${oldFile.getName}")
         IO.copy(Traversable((oldFile, newFile)))
       })
 
-//      val newFiles = getFiles(new File(newResourcePath))
-
-//      newFiles.foreach(f => println(s"new generatedFile: ${f.getAbsolutePath}"))
-
-      val oldFiles = new File(targetFilePath + "/resources")
+      val oldFiles = new File(srcManagedPath + "/resources")
       if (oldFiles.isDirectory) oldFiles.delete()
 
     } else {
       println("Thrift-Generator-Plugin:  No need to regenerate source files. skip..............")
     }
 
-    getFiles(javaFileFolder) ++ getFiles(scalaFileFolder)
+    val sources: List[File] = (getFiles(javaFileFolder) ++ getFiles(scalaFileFolder)).filter(x => x.getName.endsWith(".scala") || x.getName.endsWith(".java"))
+    val resources: List[File] = getFiles(new File(resourceManagedPath))
+
+    (sources, resources)
   }
 
   private def getFiles(path: File): List[File] = {
@@ -148,8 +146,6 @@ object ThriftGeneratorPlugin extends AutoPlugin {
         true
       } else {
         val sourceFiles = getFiles(sourceFolder)
-//        sourceFiles.foreach(f => println(s" sourceFile: ${f.getName}, modifyTime: ${f.lastModified()}"))
-
         val generatedFiles = getFiles(resourceFileFolder) ++ getFiles(targetFileFolder)
         //5. 如果 sourceFiles 任一修改时间 > (resourceFile + targetFiles) 的时间 => need regen
         if (generatedFiles.exists(generatedFile => sourceFiles.exists(_.lastModified() > generatedFile.lastModified()))) {
