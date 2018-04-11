@@ -26,22 +26,18 @@ object ImageGeneratorPlugin extends AutoPlugin {
           val properties = new Properties()
           properties.load(new FileInputStream(propertiesFile))
           val version=properties.getProperty("dapeng.version")
-          if(version!=null) version else "2.0.1-SNAPSHOT"
+          if(version!=null) version else "2.0.1"
         }
         from("dapengsoa/dapeng-container:"+dapengVersion)
 
         val containerHome = "/dapeng-container"
         run("mkdir", "-p", containerHome)
 
-        lazy val sourceFilesPath = (baseDirectory in Compile).value.getAbsolutePath + System.getProperty("file.separator") +"docker"+ System.getProperty("file.separator") + "startup.sh"
-        lazy val startupFile = new File(sourceFilesPath)
-
         val appDependency:Seq[File] = (fullClasspathAsJars in Compile).value.map(
           _.data
         )
         val projectName:String= name.value;
         run("mkdir","-p","/apps/"+projectName)
-        copy(startupFile, containerHome + "/bin/")
         run("chmod", "+x", containerHome + "/bin/startup.sh")
         workDir(containerHome + "/bin")
 
@@ -59,9 +55,6 @@ object ImageGeneratorPlugin extends AutoPlugin {
       )
     )
   )
-
-
-
 
 
 }
