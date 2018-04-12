@@ -2,7 +2,7 @@ import sbt.internal.util.complete.Parser
 
 name := "sbt-dapeng"
 
-version := "2.0.2-SNAPSHOT"
+version := "2.0.3-SNAPSHOT"
 
 scalaVersion := "2.12.2"
 
@@ -21,5 +21,7 @@ libraryDependencies ++= Seq(
   "com.github.dapeng" % "dapeng-code-generator" % "2.0.2-SNAPSHOT" exclude("javax.servlet", "servlet-api"),
   "com.github.dapeng" % "dapeng-container-impl"% "2.0.2-SNAPSHOT",
   "com.github.dapeng" % "dapeng-bootstrap" % "2.0.2-SNAPSHOT",
-  "com.github.dapeng" % "dapeng-client-netty"% "2.0.2-SNAPSHOT"
+  "com.github.dapeng" % "dapeng-client-netty"% "2.0.2-SNAPSHOT",
+  "mysql" % "mysql-connector-java" % "5.1.36",
+  "com.alibaba" % "druid" % "1.0.17"
 )

@@ -56,8 +56,11 @@ object DbGeneratorUtil {
     val className = toFirstUpperCamel(tableNameConvert(tableName))
     sb.append(s" package ${packageName}.entity \r\n")
 
-    sb.append("\r\n import java.sql.Timestamp \r\n")
-    sb.append(s" import ${packageName}.enum._ \r\n")
+    //如果有枚举字段，需要引入
+    if (columns.exists(column => !getEnumFields(column._1, column._3).isEmpty)) {
+      sb.append(s" import ${packageName}.enum._ \r\n")
+    }
+
     if (columns.exists(c => List("DATETIME", "DATE", "TIMESTAMP").contains(c._2))) {
       sb.append(" import java.sql.Timestamp \r\n")
     }
@@ -270,15 +273,26 @@ object DbGeneratorUtil {
   }
 
 
-  def connectJdbc(ip: String, db: String, user: String = "root", passwd: String = "root"): Connection = {
-    val url = s"jdbc:mysql://${ip}/${db}?useUnicode=true&characterEncoding=utf8"
+  def connectJdbc(): Option[Connection] = {
+    val url = System.getProperty("plugin.db.url")
+    val user = System.getProperty("plugin.db.user")
+    val passwd = System.getProperty("plugin.db.password")
+    println(s"connectTo, url: ${url}, user: ${user}, passwd: ${passwd}")
+
+    //val url = s"jdbc:mysql://${ip}/${db}?useUnicode=true&characterEncoding=utf8"
     try {
+      if (url == null || url.isEmpty) throw new Exception("please check if 'plugin.db.url' property is config in dapeng.properties ")
+      if (user == null || user.isEmpty) throw new Exception("please check if 'plugin.db.user' property is config in dapeng.properties ")
+      if (passwd == null || passwd.isEmpty) throw new Exception("please check if 'plugin.db.password' property is config in dapeng.properties ")
+
       Class.forName(driver)
+      Some(DriverManager.getConnection(url, user, passwd))
     } catch {
-      case e: Exception => println(s" failed to instance jdbc driver: ${e.getStackTrace}")
+      case e: Exception =>
+        println(s" failed to instance jdbc driver: ${e.getCause} , ${e.getMessage}")
+        Option.empty
     }
 
-    DriverManager.getConnection(url, user, passwd)
   }
 
 
