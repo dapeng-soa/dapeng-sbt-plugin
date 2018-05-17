@@ -17,31 +17,35 @@ object DbGeneratePlugin extends AutoPlugin {
   val help =
     """
       Please specific your package, tableName for generated the entity..
+      Your should specific plugin.db.name, plugin.db.url, plugin.db.user, plugin.db.password properties in dapeng.properties
+      like:
+       plugin.db.url=jdbc:mysql://127.0.0.1/order_db?useUnicode=true&characterEncoding=utf8
+       plugin.db.user=root
+       plugin.db.password=root
+       plugin.db.name=order_db
+      ----------------------------------------------------------------------------------------------------
       Default package is:
         com.github.dapeng.soa.scala.dbName.entity
       TableName is Optional, will generated all tableEntity if tableName not set
       For Example:
-       1. dbGenerate com.github.dapeng.soa.scala.crm  crm_companies
+       1. > dbGenerate
+           will generate entity like:  com.github.dapeng.soa.scala.crm.entity.XXX
+           will generate enum like: com.github.dapeng.soa.scala.crm.enum.XXX
+
+       1. > dbGenerate com.github.dapeng.soa.scala.crm  crm_companies
           will generate entity like:  com.github.dapeng.soa.scala.crm.entity.XXX
           will generate enum like: com.github.dapeng.soa.scala.crm.enum.XXX
 
-       2. dbGenerate
-          will generate entity like:  com.github.dapeng.soa.scala.crm.entity.XXX
-          will generate enum like: com.github.dapeng.soa.scala.crm.enum.XXX
-
-       3. dbGenerate com.github.dapeng.soa.scala.crm.entity
+       3. > dbGenerate com.github.dapeng.soa.scala.crm.entity
           will generate entity like: com.github.dapeng.soa.scala.crm.entity.entity.XXX
           will generate enum like: com.github.dapeng.soa.scala.crm.entity.enum.XXX
 
       note: enum COMMENT FORMAT should be:
-      Comment,EnumIndex:ChineseChars(EnglishChars);enumIndex:ChineseChars(EnglishChars);
+      Comment,EnumIndex:Chars(EnglishChars);enumIndex:Chars(EnglishChars);
 
       like:
       账户类型,1:资金账户(CAPITAL);2:贷款账号(CREDIT);3:预付账户(PREPAY);
     """.stripMargin
-
-  val user = "root"
-  val passwd = "root"
 
   val dbGenerate = inputKey[Unit]("A demo input task.")
 

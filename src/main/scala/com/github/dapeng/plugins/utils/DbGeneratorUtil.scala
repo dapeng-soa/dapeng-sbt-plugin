@@ -140,14 +140,17 @@ object DbGeneratorUtil {
 
     sb.append(s" object ${enumClassName} { \r\n")
     enums.foreach(enum => {
-      val enumUpper = enum._2.toCharArray.map(i => if (i.isUpper) s"_${i}" else i.toUpper.toString).mkString("")
+      //val enumUpper = enum._2.toCharArray.map(i => if (i.isUpper) s"_${i}" else i.toUpper.toString).mkString("")
+      val enumUpper = enum._2.toUpperCase
+      println(s" enumUpper: ${enumUpper}")
       sb.append(s"""\t val ${enumUpper} = new ${enumClassName}(${enum._1},"${enumUpper}") \r\n""")
     })
     sb.append(s"""\t def unknown(id: Int) = new ${enumClassName}(id, id+"") \r\n""")
 
     sb.append(s"""\t def valueOf(id: Int): ${enumClassName} = id match { \r\n""")
     enums.foreach(enum => {
-      val enumUpper = enum._2.toCharArray.map(i => if (i.isUpper) s"_${i}" else i.toUpper.toString).mkString("")
+      //val enumUpper = enum._2.toCharArray.map(i => if (i.isUpper) s"_${i}" else i.toUpper.toString).mkString("")
+      val enumUpper = enum._2.toUpperCase
       sb.append(s" \t\t case ${enum._1} => ${enumUpper} \r\n")
     })
     sb.append(" \t\t case _ => unknown(id) \r\n")
@@ -155,7 +158,6 @@ object DbGeneratorUtil {
 
     sb.append(s" def apply(v: Int) = valueOf(v) \r\n")
     sb.append(s" def unapply(v: ${enumClassName}): Option[Int] = Some(v.id) \r\n")
-
 
     sb.append(s" implicit object Accessor extends DbEnumJdbcValueAccessor[${enumClassName}](valueOf) \r\n")
 
