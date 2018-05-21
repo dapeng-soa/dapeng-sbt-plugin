@@ -116,7 +116,7 @@ object DbGeneratePlugin extends AutoPlugin {
     generateEntityFile(dbClassTemplate, targetPath + "entity/", s"${toFirstUpperCamel(tableNameConvert(tableName))}.scala")
 
     columns.foreach(column => {
-      generateEnumFile(tableName, column._1, column._3, targetPath + "enum/", packageName, s"${toFirstUpperCamel(tableNameConvert(tableName)) + toFirstUpperCamel(column._1)}.scala")
+      generateEnumFile(tableName, column._1, column._3, targetPath + "enums/", packageName, s"${toFirstUpperCamel(tableNameConvert(tableName)) + toFirstUpperCamel(column._1)}.scala")
     })
   }
 
