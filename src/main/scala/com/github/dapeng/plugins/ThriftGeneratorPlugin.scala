@@ -87,7 +87,10 @@ object ThriftGeneratorPlugin extends AutoPlugin {
 
       resourceFiles.foreach(oldFile => {
         val newFile = new File(newResourcePath + s"/${oldFile.getName}")
-        IO.copy(Traversable((oldFile, newFile)))
+        IO.copy(Traversable((oldFile, newFile)), CopyOptions(true,false,false))
+
+        // fixed at 2018-04-26 with no-override options, it will report CreateFile 32 error on windows 10.
+        //IO.copy(Traversable((oldFile, newFile)))
       })
 
       val oldFiles = new File(srcManagedPath + "/resources")
