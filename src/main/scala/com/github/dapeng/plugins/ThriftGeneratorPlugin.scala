@@ -93,6 +93,7 @@ object ThriftGeneratorPlugin extends AutoPlugin {
         //IO.copy(Traversable((oldFile, newFile)))
       })
 
+
       val oldFiles = new File(srcManagedPath + "/resources")
       if (oldFiles.isDirectory) oldFiles.delete()
 
