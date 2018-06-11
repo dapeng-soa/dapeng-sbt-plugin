@@ -58,7 +58,7 @@ object DbGeneratorUtil {
 
     //如果有枚举字段，需要引入
     if (columns.exists(column => !getEnumFields(column._1, column._3).isEmpty)) {
-      sb.append(s" import ${packageName}.enum._ \r\n")
+      sb.append(s" import ${packageName}.enums._ \r\n")
     }
 
     if (columns.exists(c => List("DATETIME", "DATE", "TIMESTAMP").contains(c._2))) {
@@ -113,7 +113,7 @@ object DbGeneratorUtil {
   def toEnumFileTemplate(tableName: String, enums: List[(String, String)], packageName: String, columnName: String): String = {
     val sb = new StringBuilder(256)
     val enumClassName = toFirstUpperCamel(tableNameConvert(tableName)) + toFirstUpperCamel(columnName)
-    sb.append(s" package ${packageName}.enum \r\n")
+    sb.append(s" package ${packageName}.enums \r\n")
     sb.append(" import wangzx.scala_commons.sql.DbEnum \r\n")
     sb.append(" import wangzx.scala_commons.sql._ \r\n")
 
