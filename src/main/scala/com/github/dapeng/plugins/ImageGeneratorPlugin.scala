@@ -26,7 +26,7 @@ object ImageGeneratorPlugin extends AutoPlugin {
           val properties = new Properties()
           properties.load(new FileInputStream(propertiesFile))
           val version=properties.getProperty("dapeng.version")
-          if(version!=null) version else "2.0.1"
+          if(version!=null) version else "2.0.4"
         }
         from("dapengsoa/dapeng-container:"+dapengVersion)
 
