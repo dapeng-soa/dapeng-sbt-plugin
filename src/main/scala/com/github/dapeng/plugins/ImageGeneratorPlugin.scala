@@ -43,7 +43,9 @@ object ImageGeneratorPlugin extends AutoPlugin {
 
         copy(appDependency, containerHome + "/apps/"+projectName+"/")
 
-        cmd("/bin/sh", "-c", containerHome + "/bin/startup.sh && tail -F " + containerHome + "/bin/startup.sh")
+        //cmd("/bin/sh", "-c", containerHome + "/bin/startup.sh && tail -F " + containerHome + "/bin/startup.sh")
+        //使用此命令启动容器 可以使1号线程为应用进程，可以监控到SIGTERM信号，捕捉到该信号进行优雅的关闭容器
+        entryPoint(containerHome + "/bin/startup.sh")
       }
     },
 
