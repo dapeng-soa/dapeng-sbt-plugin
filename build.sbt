@@ -2,13 +2,13 @@ import sbt.internal.util.complete.Parser
 
 name := "sbt-dapeng"
 
-version := "2.0.4"
+version := "2.0.5"
 
 scalaVersion := "2.12.2"
 
 sbtPlugin := true
 
-organization := "com.github.dapeng"
+organization := "com.github.dapeng-soa"
 
 resolvers += Resolver.mavenLocal
 
@@ -20,8 +20,8 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.5")
 libraryDependencies ++= Seq(
   "mysql" % "mysql-connector-java" % "5.1.36",
   "com.alibaba" % "druid" % "1.1.9",
-  "com.github.dapeng" % "dapeng-code-generator" % "2.0.4" exclude("javax.servlet", "servlet-api"),
-  "com.github.dapeng" % "dapeng-container-impl"% "2.0.4",
-  "com.github.dapeng" % "dapeng-bootstrap" % "2.0.4",
-  "com.github.dapeng" % "dapeng-client-netty"% "2.0.4"
+  "com.github.dapeng-soa" % "dapeng-code-generator" % "2.0.5" exclude("javax.servlet", "servlet-api"),
+  "com.github.dapeng-soa" % "dapeng-container-impl"% "2.0.5",
+  "com.github.dapeng-soa" % "dapeng-bootstrap" % "2.0.5",
+  "com.github.dapeng-soa" % "dapeng-client-netty"% "2.0.5"
 )
