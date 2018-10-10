@@ -26,8 +26,8 @@ object ImageGeneratorPlugin extends AutoPlugin {
           val properties = new Properties()
           properties.load(new FileInputStream(propertiesFile))
           val version=properties.getProperty("dapeng.version")
-          if(version!=null) version else "2.0.4"
-        }
+          if(version!=null) version else "2.0.5"
+        } else "2.0.5"
         from("dapengsoa/dapeng-container:"+dapengVersion)
 
         val containerHome = "/dapeng-container"
@@ -47,17 +47,27 @@ object ImageGeneratorPlugin extends AutoPlugin {
         //使用此命令启动容器 可以使1号线程为应用进程，可以监控到SIGTERM信号，捕捉到该信号进行优雅的关闭容器
         entryPoint(containerHome + "/bin/startup.sh")
       }
+
     },
 
-    imageNames in docker := Seq (
+    imageNames in docker := Seq ( {
+      val projectPath = (baseDirectory in Compile).value.getAbsolutePath
+      val propertiesFile=new File(projectPath + "/dapeng.properties")
+      val dapengNamespace=if(propertiesFile.canRead){
+        val properties = new Properties()
+        properties.load(new FileInputStream(propertiesFile))
+        val namespace= properties.getProperty("image.namespace")
+        if(namespace != null) namespace.toString else "dapengsoa/biz"
+      } else "dapengsoa/biz"
       ImageName(
-        namespace = Some("dapengsoa/biz"),
+        namespace = Some(dapengNamespace),
         repository = name.value,
         tag = Some(git.gitHeadCommit.value match { case Some(tag) => tag.substring(0, 7) case None => "latest" })
       )
+    }
+
     )
   )
-
 
 }
 
