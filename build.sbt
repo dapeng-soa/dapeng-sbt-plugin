@@ -10,7 +10,12 @@ sbtPlugin := true
 
 organization := "com.github.dapeng-soa"
 
-resolvers += Resolver.mavenLocal
+publishTo := Some("today-snapshots" at "http://nexus.today36524.td/repository/maven-releases/")
+
+credentials += Credentials("Sonatype Nexus Repository Manager", "nexus.today36524.td", "central-services", "E@Z.nrW3")
+
+//允许覆盖deploy
+isSnapshot := true
 
 addSbtPlugin("se.marcuslonnberg" % "sbt-docker" % "1.4.1")
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")

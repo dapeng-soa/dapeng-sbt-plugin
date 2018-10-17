@@ -36,7 +36,7 @@ object ImageGeneratorPlugin extends AutoPlugin {
         val appDependency:Seq[File] = (fullClasspathAsJars in Compile).value.map(
           _.data
         )
-        val projectName:String= name.value;
+        val projectName:String= name.value
         run("mkdir","-p","/apps/"+projectName)
         run("chmod", "+x", containerHome + "/bin/startup.sh")
         workDir(containerHome + "/bin")
@@ -57,8 +57,8 @@ object ImageGeneratorPlugin extends AutoPlugin {
         val properties = new Properties()
         properties.load(new FileInputStream(propertiesFile))
         val namespace= properties.getProperty("image.namespace")
-        if(namespace != null) namespace.toString else "dapengsoa/biz"
-      } else "dapengsoa/biz"
+        if(namespace != null) namespace.toString else "docker.today36524.com.cn:5000/biz"
+      } else "docker.today36524.com.cn:5000/biz"
       ImageName(
         namespace = Some(dapengNamespace),
         repository = name.value,
