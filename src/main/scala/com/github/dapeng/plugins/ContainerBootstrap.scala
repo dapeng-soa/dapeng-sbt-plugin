@@ -22,18 +22,15 @@ class ContainerBootstrap {
       Bootstrap.sbtStartup(this.getClass.getClassLoader,
         appClasspaths.toList.asJava
       )
-
     }
     catch {
+
       case ex: Exception => {
         println(ex.getStackTrace)
         logger.error(ex.getMessage, ex)
       }
     }
-
-
   }
-
 
 }
 
