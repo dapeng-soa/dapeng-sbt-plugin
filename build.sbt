@@ -21,8 +21,8 @@ libraryDependencies ++= Seq(
   "mysql" % "mysql-connector-java" % "5.1.36",
   "com.alibaba" % "druid" % "1.1.9",
   "org.apache.commons" % "commons-vfs2" % "2.2",
-"com.github.dapeng-soa" % "dapeng-code-generator" % "2.1.0" exclude("javax.servlet", "servlet-api"),
-  "com.github.dapeng-soa" % "dapeng-container-impl"% "2.1.0",
-  "com.github.dapeng-soa" % "dapeng-bootstrap" % "2.1.0",
-  "com.github.dapeng-soa" % "dapeng-client-netty"% "2.1.0"
+"com.github.dapeng-soa" % "dapeng-code-generator" % "2.1.1-SNAPSHOT" exclude("javax.servlet", "servlet-api"),
+  "com.github.dapeng-soa" % "dapeng-container-impl"% "2.1.1-SNAPSHOT",
+  "com.github.dapeng-soa" % "dapeng-bootstrap" % "2.1.1-SNAPSHOT",
+  "com.github.dapeng-soa" % "dapeng-client-netty"% "2.1.1-SNAPSHOT"
 )
