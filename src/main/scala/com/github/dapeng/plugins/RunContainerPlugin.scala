@@ -1,27 +1,21 @@
 package com.github.dapeng.plugins
 
 import java.io.{File, FileInputStream}
-import java.lang.reflect.{Constructor, Method}
 import java.net.URL
 import java.util
-import java.util.{ArrayList, Optional, Properties}
+import java.util.{Properties}
 
 import com.github.dapeng.api.{Container, Plugin}
 import com.github.dapeng.bootstrap.classloader.ApplicationClassLoader
 import com.github.dapeng.core._
-import com.github.dapeng.core.definition.SoaServiceDefinition
-import com.github.dapeng.core.helper.SoaSystemEnvProperties
-import com.github.dapeng.impl.container.DapengApplication
-import com.github.dapeng.impl.plugins.{ApiDocPlugin, SpringAppLoader, ZookeeperRegistryPlugin}
+import com.github.dapeng.impl.plugins.{ApiDocPlugin, SpringAppLoader}
 import org.slf4j.LoggerFactory
 import sbt.Keys._
 import sbt.{AutoPlugin, _}
 import xsbti.compile.CompileAnalysis
 
 import collection.JavaConversions._
-import scala.collection.JavaConverters._
 import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 /**
   * Created by lihuimin on 2017/11/8.
@@ -42,7 +36,6 @@ object RunContainerPlugin extends AutoPlugin {
     bootstrapThread.start()
 
    // bootstrapThread.join()
-    flag = false
   }
 
   def loadSystemProperties(file: File): Unit = {
@@ -75,16 +68,16 @@ object RunContainerPlugin extends AutoPlugin {
 
       val classpathsWithDapeng = dependentClasspaths.toList
 
-      val compileResult: CompileAnalysis = (compile in Compile).value
+/*      val compileResult: CompileAnalysis = (compile in Compile).value
       import scala.collection.JavaConverters._
       val changeFile = compileResult.readStamps().getAllProductStamps.asScala.toList.sortBy(0 - _._2.getLastModified.get).take(10)
 
       changeFile.foreach { x =>
         println(s"changefile ${x._1} timestamp = ${x._2}")
-      }
+      }*/
 
 
-      if (changeFile.nonEmpty && flag) {
+      if (/*changeFile.nonEmpty && */flag) {
         reloadApplication(classpathsWithDapeng)
       }
 
@@ -130,7 +123,7 @@ object RunContainerPlugin extends AutoPlugin {
 
     val getRegPluMethod = container.getClass.getMethod("registerPlugin", Class.forName("com.github.dapeng.api.Plugin"))
 
-    val size = plugins.length - 1
+    val size = plugins.size() - 1
     for ( i <- (0 to size).reverse){
       if (plugins.get(i).isInstanceOf[SpringAppLoader]) {
         println("============== Re-registration SpringAppLoader plugin ========================")
@@ -141,14 +134,14 @@ object RunContainerPlugin extends AutoPlugin {
         println("============== new SpringAppLoader plugin  start done ========================")
       }
     }
-    plugins.foreach(item => {
+    plugins.foreach{ item =>
       if (item.isInstanceOf[ApiDocPlugin]) {
         println("============== restart ApiDocPlugin ==========================")
         item.stop()
         item.start()
         println("============== restart ApiDocPlugin done ==========================")
       }
-    })
+    }
   }
 }
 
