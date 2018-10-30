@@ -4,9 +4,9 @@ import java.io.{File, FileInputStream}
 import java.lang.reflect.{Constructor, Method}
 import java.net.URL
 import java.util
-import java.util.{Optional, Properties}
+import java.util.{ArrayList, Optional, Properties}
 
-import com.github.dapeng.api.Plugin
+import com.github.dapeng.api.{Container, Plugin}
 import com.github.dapeng.bootstrap.classloader.ApplicationClassLoader
 import com.github.dapeng.core._
 import com.github.dapeng.core.definition.SoaServiceDefinition
@@ -19,6 +19,7 @@ import sbt.{AutoPlugin, _}
 import xsbti.compile.CompileAnalysis
 
 import collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -74,9 +75,14 @@ object RunContainerPlugin extends AutoPlugin {
 
       val classpathsWithDapeng = dependentClasspaths.toList
 
-      val compileResule: CompileAnalysis = (compile in Compile).value
+      val compileResult: CompileAnalysis = (compile in Compile).value
       import scala.collection.JavaConverters._
-      val changeFile = compileResule.readStamps().getAllProductStamps.asScala.toList
+      val changeFile = compileResult.readStamps().getAllProductStamps.asScala.toList.sortBy(0 - _._2.getLastModified.get).take(10)
+
+      changeFile.foreach { x =>
+        println(s"changefile ${x._1} timestamp = ${x._2}")
+      }
+
 
       if (changeFile.nonEmpty && flag) {
         reloadApplication(classpathsWithDapeng)
@@ -114,15 +120,55 @@ object RunContainerPlugin extends AutoPlugin {
     val unregisterAppMethod = container.getClass.getMethod("unregisterApplication", Class.forName("com.github.dapeng.core.Application"))
     unregisterAppMethod.invoke(container,oldApplication)
     println("================ unregisterApp [" + oldApplication + "] done ================")
+
+    val applicationLibs: List[URL] = appClasspaths.toList
+    val appClassLoader = new ApplicationClassLoader(applicationLibs.toArray, null, containerClassLoader)
+    val applicationCLs = new util.ArrayList[ClassLoader]
+    applicationCLs.add(appClassLoader)
+
     val getPluginsMethod = container.getClass.getMethod("getPlugins")
     val plugins:util.List[Plugin]= getPluginsMethod.invoke(container).asInstanceOf[java.util.List[Plugin]]
-    plugins.foreach(item => {
-      if (item.isInstanceOf[SpringAppLoader] || item.isInstanceOf[ApiDocPlugin]) {
-        item.stop()
-        item.start()
+
+  //  val getUnregPluMethod = container.getClass.getMethod("unregisterPlugin", Class.forName("com.github.dapeng.api.Plugin"))
+    val getRegPluMethod = container.getClass.getMethod("registerPlugin", Class.forName("com.github.dapeng.api.Plugin"))
+
+/*    val iterator: Iterator [Plugin]  = plugins.iterator()
+    while (iterator.hasNext) {
+      val plugin: Plugin = iterator.next()
+      if (plugin.isInstanceOf[SpringAppLoader]) {
+        println("******************")
+        iterator.remove()
+        //getUnregPluMethod.invoke(container, plugin)
+        val newSpringPlugin = new SpringAppLoader(container.asInstanceOf[Container], applicationCLs)
+        getRegPluMethod.invoke(container,newSpringPlugin)
+        newSpringPlugin.start()
+      }
+    }*/
+
+    val size = plugins.length - 1
+    println("**-*-*-*-*- " + size)
+    for ( i <- (0 to size).reverse){
+      println("**-*-*-*-*- " + plugins.get(i))
+      if (plugins.get(i).isInstanceOf[SpringAppLoader]) {
+        println("**-*-*-*-*- plugins.remove")
+        plugins.remove(i)
+        println("**-*-*-*-*- newSpringPlugin")
+        val newSpringPlugin = new SpringAppLoader(container.asInstanceOf[Container], applicationCLs)
+        println("**-*-*-*-*- plugins register")
+        getRegPluMethod.invoke(container,newSpringPlugin)
+        println("**-*-*-*-*- plugins start")
+        newSpringPlugin.start()
+        println("**-*-*-*-*- plugins start end")
       }
     }
-    )
+
+/*    plugins.foreach(item => {
+      if (item.isInstanceOf[SpringAppLoader]) {
+
+
+
+      }
+    })*/
   }
 }
 
