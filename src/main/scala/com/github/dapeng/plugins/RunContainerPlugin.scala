@@ -110,7 +110,6 @@ object RunContainerPlugin extends AutoPlugin {
 
   def reloadApplication(appClasspaths: Seq[URL]): Unit = {
     println("================ reloadApplication ================")
-    val configPath = "META-INF/spring/services.xml"
     val containerClassLoader = this.getClass.getClassLoader
     val containerFactoryClz = containerClassLoader.loadClass("com.github.dapeng.api.ContainerFactory")
     val getContainerMethod = containerFactoryClz.getMethod("getContainer")
@@ -119,7 +118,7 @@ object RunContainerPlugin extends AutoPlugin {
     val oldApplication:Application = getAppMethod.invoke(container).asInstanceOf[java.util.List[Application]].get(0)
     val unregisterAppMethod = container.getClass.getMethod("unregisterApplication", Class.forName("com.github.dapeng.core.Application"))
     unregisterAppMethod.invoke(container,oldApplication)
-    println("================ unregisterApp [" + oldApplication + "] done ================")
+    println(s"================ unregisterApp [ $oldApplication ] done ================")
 
     val applicationLibs: List[URL] = appClasspaths.toList
     val appClassLoader = new ApplicationClassLoader(applicationLibs.toArray, null, containerClassLoader)
@@ -129,46 +128,27 @@ object RunContainerPlugin extends AutoPlugin {
     val getPluginsMethod = container.getClass.getMethod("getPlugins")
     val plugins:util.List[Plugin]= getPluginsMethod.invoke(container).asInstanceOf[java.util.List[Plugin]]
 
-  //  val getUnregPluMethod = container.getClass.getMethod("unregisterPlugin", Class.forName("com.github.dapeng.api.Plugin"))
     val getRegPluMethod = container.getClass.getMethod("registerPlugin", Class.forName("com.github.dapeng.api.Plugin"))
 
-/*    val iterator: Iterator [Plugin]  = plugins.iterator()
-    while (iterator.hasNext) {
-      val plugin: Plugin = iterator.next()
-      if (plugin.isInstanceOf[SpringAppLoader]) {
-        println("******************")
-        iterator.remove()
-        //getUnregPluMethod.invoke(container, plugin)
-        val newSpringPlugin = new SpringAppLoader(container.asInstanceOf[Container], applicationCLs)
-        getRegPluMethod.invoke(container,newSpringPlugin)
-        newSpringPlugin.start()
-      }
-    }*/
-
     val size = plugins.length - 1
-    println("**-*-*-*-*- " + size)
     for ( i <- (0 to size).reverse){
-      println("**-*-*-*-*- " + plugins.get(i))
       if (plugins.get(i).isInstanceOf[SpringAppLoader]) {
-        println("**-*-*-*-*- plugins.remove")
+        println("============== Re-registration SpringAppLoader plugin ========================")
         plugins.remove(i)
-        println("**-*-*-*-*- newSpringPlugin")
         val newSpringPlugin = new SpringAppLoader(container.asInstanceOf[Container], applicationCLs)
-        println("**-*-*-*-*- plugins register")
         getRegPluMethod.invoke(container,newSpringPlugin)
-        println("**-*-*-*-*- plugins start")
         newSpringPlugin.start()
-        println("**-*-*-*-*- plugins start end")
+        println("============== new SpringAppLoader plugin  start done ========================")
       }
     }
-
-/*    plugins.foreach(item => {
-      if (item.isInstanceOf[SpringAppLoader]) {
-
-
-
+    plugins.foreach(item => {
+      if (item.isInstanceOf[ApiDocPlugin]) {
+        println("============== restart ApiDocPlugin ==========================")
+        item.stop()
+        item.start()
+        println("============== restart ApiDocPlugin done ==========================")
       }
-    })*/
+    })
   }
 }
 
