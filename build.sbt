@@ -8,13 +8,28 @@ scalaVersion := "2.12.2"
 
 sbtPlugin := true
 
-organization := "com.github.dapeng"
+organization := "com.github.dapeng-soa"
 
 resolvers += Resolver.mavenLocal
 
 addSbtPlugin("se.marcuslonnberg" % "sbt-docker" % "1.4.1")
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.5")
+
+
+ThisBuild / version := "2.0.5"
+ThisBuild / organization := "com.github.dapeng-soa"
+ThisBuild / description := "this is a plugin for dapeng-soa framework"
+ThisBuild / licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html"))
+
+lazy val root = (project in file("."))
+  .settings(
+    sbtPlugin := true,
+    name := "sbt-dapeng",
+    publishMavenStyle := false,
+    bintrayRepository := "sbt-dapeng",
+    bintrayOrganization in bintray := None
+  )
 
 
 libraryDependencies ++= Seq(
