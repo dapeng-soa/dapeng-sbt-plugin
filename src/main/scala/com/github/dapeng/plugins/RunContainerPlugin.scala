@@ -25,17 +25,16 @@ object RunContainerPlugin extends AutoPlugin {
   val runContainer = taskKey[Unit]("run dapeng container")
   val logger = LoggerFactory.getLogger(getClass)
   val sourceCodeMap = mutable.HashMap[String,Long]()
-  var flag = false
+  var switch2Reload = false
 
   def runDapeng(appClasspaths: Seq[URL]): Unit = {
     val threadGroup = new ThreadGroup("dapeng")
     val bootstrapThread = new Thread(threadGroup, () => {
-      flag = true
+      switch2Reload  = true
       new ContainerBootstrap().bootstrap(appClasspaths)
     })
     bootstrapThread.start()
 
-   // bootstrapThread.join()
   }
 
   def loadSystemProperties(file: File): Unit = {
@@ -58,8 +57,6 @@ object RunContainerPlugin extends AutoPlugin {
 
       println(s" projectPath: ${projectPath}")
 
-      //val scalaSourceFiles = getSourceFiles(s"${projectPath}../../../src/main")
-
       loadSystemProperties(new File(projectPath + "/dapeng.properties"))
 
       val dependentClasspaths = (fullClasspath in Compile).value.map(
@@ -68,21 +65,12 @@ object RunContainerPlugin extends AutoPlugin {
 
       val classpathsWithDapeng = dependentClasspaths.toList
 
-/*      val compileResult: CompileAnalysis = (compile in Compile).value
-      import scala.collection.JavaConverters._
-      val changeFile = compileResult.readStamps().getAllProductStamps.asScala.toList.sortBy(0 - _._2.getLastModified.get).take(10)
-
-      changeFile.foreach { x =>
-        println(s"changefile ${x._1} timestamp = ${x._2}")
-      }*/
-
-
-      if (/*changeFile.nonEmpty && */flag) {
+      if (switch2Reload) {
         reloadApplication(classpathsWithDapeng)
       }
 
 
-      if (!flag) {
+      if (!switch2Reload) {
         runDapeng(classpathsWithDapeng)
       }
 
