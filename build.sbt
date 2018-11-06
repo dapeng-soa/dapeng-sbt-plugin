@@ -2,7 +2,7 @@ import sbt.internal.util.complete.Parser
 
 name := "sbt-dapeng"
 
-version := "2.1.2"
+version := "2.1.1-SNAPSHOT"
 
 scalaVersion := "2.12.2"
 
