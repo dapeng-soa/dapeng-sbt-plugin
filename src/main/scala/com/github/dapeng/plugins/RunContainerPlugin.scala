@@ -3,12 +3,14 @@ package com.github.dapeng.plugins
 import java.io.{File, FileInputStream}
 import java.net.URL
 import java.util
-import java.util.{Properties}
+import java.util.Properties
 
 import com.github.dapeng.api.{Container, Plugin}
 import com.github.dapeng.bootstrap.classloader.ApplicationClassLoader
 import com.github.dapeng.core._
+import com.github.dapeng.core.helper.SoaSystemEnvProperties
 import com.github.dapeng.impl.plugins.{ApiDocPlugin, SpringAppLoader}
+import com.github.dapeng.json.OptimizedMetadata
 import org.slf4j.LoggerFactory
 import sbt.Keys._
 import sbt.{AutoPlugin, _}
@@ -124,10 +126,15 @@ object RunContainerPlugin extends AutoPlugin {
     }
     plugins.foreach{ item =>
       if (item.isInstanceOf[ApiDocPlugin]) {
-        println("============== restart ApiDocPlugin ==========================")
-        item.stop()
-        item.start()
-        println("============== restart ApiDocPlugin done ==========================")
+        println("============== Re-InitServiceCache ========================")
+        val serviceCacheClz = item.getClass.getClassLoader.loadClass("com.github.dapeng.doc.cache.ServiceCache")
+        val initMethod = serviceCacheClz.getMethod("init")
+        val getServiceMethod = serviceCacheClz.getMethod("getServices")
+        val ins = serviceCacheClz.newInstance()
+        getServiceMethod.invoke(ins).asInstanceOf[util.TreeMap[String, OptimizedMetadata.OptimizedService]].clear()
+        initMethod.invoke(ins)
+        println("============== Re-InitServiceCache done ========================")
+        println("api-doc server started at port: " + SoaSystemEnvProperties.SOA_APIDOC_PORT)
       }
     }
   }
