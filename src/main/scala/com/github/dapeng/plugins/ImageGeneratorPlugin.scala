@@ -57,8 +57,8 @@ object ImageGeneratorPlugin extends AutoPlugin {
         val properties = new Properties()
         properties.load(new FileInputStream(propertiesFile))
         val namespace= properties.getProperty("image.namespace")
-        if(namespace != null) namespace.toString else "docker.today36524.com.cn:5000/biz"
-      } else "docker.today36524.com.cn:5000/biz"
+        if(namespace != null) namespace.toString else "harbor.today36524.td/biz"
+      } else "harbor.today36524.td/biz"
       ImageName(
         namespace = Some(dapengNamespace),
         repository = name.value,
