@@ -1,6 +1,6 @@
 package com.github.dapeng.plugins
 
-import java.io.{File, FileInputStream}
+import java.io.{File, FileInputStream, FileNotFoundException}
 import java.net.URL
 import java.util
 import java.util.Properties
@@ -11,13 +11,14 @@ import com.github.dapeng.core._
 import com.github.dapeng.core.helper.SoaSystemEnvProperties
 import com.github.dapeng.impl.plugins.{ApiDocPlugin, SpringAppLoader}
 import com.github.dapeng.json.OptimizedMetadata
+import com.github.dapeng.plugins.utils.DapengProperties
 import org.slf4j.LoggerFactory
 import sbt.Keys._
 import sbt.{AutoPlugin, _}
 import xsbti.compile.CompileAnalysis
 
-import collection.JavaConversions._
 import scala.collection.mutable
+import collection.JavaConverters._
 
 /**
   * Created by lihuimin on 2017/11/8.
@@ -29,11 +30,11 @@ object RunContainerPlugin extends AutoPlugin {
   val sourceCodeMap = mutable.HashMap[String,Long]()
   var switch2Reload = false
 
-  def runDapeng(appClasspaths: Seq[URL]): Unit = {
+  def runDapeng(appClasspaths: Seq[URL], pluginsLibs: util.List[util.List[URL]]): Unit = {
     val threadGroup = new ThreadGroup("dapeng")
     val bootstrapThread = new Thread(threadGroup, () => {
       switch2Reload  = true
-      new ContainerBootstrap().bootstrap(appClasspaths)
+      new ContainerBootstrap().bootstrap(appClasspaths, pluginsLibs)
     })
     bootstrapThread.start()
 
@@ -44,7 +45,7 @@ object RunContainerPlugin extends AutoPlugin {
       val properties = new Properties()
       properties.load(new FileInputStream(file))
 
-      val results = properties.keySet().map(_.toString)
+      val results = properties.keySet().asScala.map(_.toString)
       results.foreach(keyString => {
         System.setProperty(keyString, properties.getProperty(keyString))
       })
@@ -71,9 +72,9 @@ object RunContainerPlugin extends AutoPlugin {
         reloadApplication(classpathsWithDapeng)
       }
 
-
+      val pluginsLibs = getPluginsLibs()
       if (!switch2Reload) {
-        runDapeng(classpathsWithDapeng)
+        runDapeng(classpathsWithDapeng, pluginsLibs)
       }
 
 
@@ -81,6 +82,28 @@ object RunContainerPlugin extends AutoPlugin {
 
     logLevel in runContainer := Level.Info
   )
+
+  private def getPluginsLibs() = {
+    val dapengPluginPath = System.getProperty(DapengProperties.DAPENG_PLUGIN_PATH)
+    if (dapengPluginPath != null && !dapengPluginPath.isEmpty) {
+      val pluginsLibs = new util.ArrayList[util.List[URL]]()
+      val pluginParentDir = new File(dapengPluginPath)
+      if (!pluginParentDir.exists()) {
+        throw new FileNotFoundException(s"文件目录不存在: ${dapengPluginPath}")
+      }
+
+      val pluginDirs = pluginParentDir.listFiles()
+      if (pluginDirs != null) {
+        for (pluginDir <- pluginDirs) {
+          val urls = pluginDir.listFiles().toList.map(i => i.asURL)
+          pluginsLibs.add(urls.asJava)
+        }
+      }
+      pluginsLibs
+    } else {
+      new util.ArrayList[util.List[URL]]()
+    }
+  }
 
   def getSourceFiles(path: String): List[File] = {
     if (!new File(path).isDirectory) {
@@ -124,7 +147,7 @@ object RunContainerPlugin extends AutoPlugin {
         println("============== new SpringAppLoader plugin  start done ========================")
       }
     }
-    plugins.foreach{ item =>
+    plugins.asScala.foreach{ item =>
       if (item.isInstanceOf[ApiDocPlugin]) {
         println("============== Re-InitServiceCache ========================")
         val serviceCacheClz = item.getClass.getClassLoader.loadClass("com.github.dapeng.doc.cache.ServiceCache")
