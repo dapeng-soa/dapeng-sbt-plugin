@@ -258,7 +258,7 @@ object DbGeneratorUtil {
 
   def toScalaFieldType(tableFieldType: String, isNullable: String): String = {
     val dataType = tableFieldType.toUpperCase() match {
-      case "INT" | "SMALLINT" | "TINYINT" | "INT UNSIGNED" | "SMALLINT UNSIGNED" | "TINYINT UNSIGNED" => "Int"
+      case "INT" | "SMALLINT" | "TINYINT" |"BIT"| "INT UNSIGNED" | "SMALLINT UNSIGNED" | "TINYINT UNSIGNED" => "Int"
       case "BIGINT" => "Long"
       case "CHAR" | "VARCHAR" => "String"
       case "DECIMAL" | "DOUBLE" | "FLOAT" => "BigDecimal"
