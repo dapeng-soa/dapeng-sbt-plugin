@@ -26,7 +26,6 @@ class ContainerBootstrap {
       )
     }
     catch {
-
       case ex: Exception => {
         println(ex.getStackTrace)
         logger.error(ex.getMessage, ex)
