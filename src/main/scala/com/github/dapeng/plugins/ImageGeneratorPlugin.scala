@@ -3,61 +3,61 @@ package com.github.dapeng.plugins
 import java.io.FileInputStream
 import java.util.Properties
 
-import sbt._
+import sbt.{File, _}
 import sbtdocker.DockerKeys.{docker, imageNames}
 import sbt.Keys._
 import sbtdocker.ImageName
 import sbtdocker.DockerPlugin.autoImport.dockerfile
 import com.typesafe.sbt.GitPlugin.autoImport._
 import sbtassembly.AssemblyKeys
+import sbtdocker.mutable.Dockerfile
+
 /**
   * Created by lihuimin on 2017/11/7.
   */
 object ImageGeneratorPlugin extends AutoPlugin {
 
-  override def requires = sbtdocker.DockerPlugin&&com.typesafe.sbt.GitPlugin&&sbtassembly.AssemblyPlugin
+  val dockerFileTask = taskKey[Unit]("Prepare the dockerfile and needed files")
+
+  override def requires = sbtdocker.DockerPlugin && com.typesafe.sbt.GitPlugin && sbtassembly.AssemblyPlugin
 
   override lazy val projectSettings = Seq(
-    dockerfile in docker := {
-      new sbtdocker.mutable.Dockerfile {
-        val projectPath = (baseDirectory in Compile).value.getAbsolutePath
-        val propertiesFile=new File(projectPath + "/dapeng.properties")
-        val dapengVersion=if(propertiesFile.canRead){
-          val properties = new Properties()
-          properties.load(new FileInputStream(propertiesFile))
-          val version=properties.getProperty("dapeng.version")
-          if(version!=null) version else "2.0.5"
-        } else "2.0.5"
-        from("dapengsoa/dapeng-container:"+dapengVersion)
 
-        val containerHome = "/dapeng-container"
-        run("mkdir", "-p", containerHome)
-
-        val appDependency:Seq[File] = (fullClasspathAsJars in Compile).value.map(
-          _.data
-        )
-        val projectName:String= name.value;
-        run("mkdir","-p","/apps/"+projectName)
-        run("chmod", "+x", containerHome + "/bin/startup.sh")
-        workDir(containerHome + "/bin")
-
-        copy(appDependency, containerHome + "/apps/"+projectName+"/")
-
-        //cmd("/bin/sh", "-c", containerHome + "/bin/startup.sh && tail -F " + containerHome + "/bin/startup.sh")
-        //使用此命令启动容器 可以使1号线程为应用进程，可以监控到SIGTERM信号，捕捉到该信号进行优雅的关闭容器
-        entryPoint(containerHome + "/bin/startup.sh")
+    dockerFileTask := {
+      val dockerDir = target.value / "docker"
+      if (dockerDir.exists()) {
+        deleteFile(dockerDir)
       }
-
+      val projectPath = (baseDirectory in Compile).value.getAbsolutePath
+      val projectName: String = name.value
+      val appDependency: Seq[File] = (fullClasspathAsJars in Compile).value.map(
+        _.data
+      )
+      val dockerFile = createDockerFile(projectPath, projectName, appDependency)
+      val stagedDockerfile = sbtdocker.staging.DefaultDockerfileProcessor(dockerFile, dockerDir)
+      IO.write(dockerDir / "Dockerfile", stagedDockerfile.instructionsString)
+      stagedDockerfile.stageFiles.foreach {
+        case (source, destination) =>
+          source.stage(destination)
+      }
+    },
+    dockerfile in docker := {
+      val projectPath = (baseDirectory in Compile).value.getAbsolutePath
+      val projectName: String = name.value
+      val appDependency: Seq[File] = (fullClasspathAsJars in Compile).value.map(
+        _.data
+      )
+      createDockerFile(projectPath, projectName, appDependency)
     },
 
-    imageNames in docker := Seq ( {
+    imageNames in docker := Seq({
       val projectPath = (baseDirectory in Compile).value.getAbsolutePath
-      val propertiesFile=new File(projectPath + "/dapeng.properties")
-      val dapengNamespace=if(propertiesFile.canRead){
+      val propertiesFile = new File(projectPath + "/dapeng.properties")
+      val dapengNamespace = if (propertiesFile.canRead) {
         val properties = new Properties()
         properties.load(new FileInputStream(propertiesFile))
-        val namespace= properties.getProperty("image.namespace")
-        if(namespace != null) namespace.toString else "dapengsoa/biz"
+        val namespace = properties.getProperty("image.namespace")
+        if (namespace != null) namespace.toString else "dapengsoa/biz"
       } else "dapengsoa/biz"
       ImageName(
         namespace = Some(dapengNamespace),
@@ -69,5 +69,46 @@ object ImageGeneratorPlugin extends AutoPlugin {
     )
   )
 
+  def createDockerFile(projectPath: String, projectName: String, appDependency: Seq[File]): Dockerfile = {
+    new sbtdocker.mutable.Dockerfile {
+
+      val propertiesFile = new File(projectPath + "/dapeng.properties")
+      val dapengVersion = if (propertiesFile.canRead) {
+        val properties = new Properties()
+        properties.load(new FileInputStream(propertiesFile))
+        val version = properties.getProperty("dapeng.version")
+        if (version != null) version else "2.0.5"
+      } else "2.0.5"
+      from("dapengsoa/dapeng-container:" + dapengVersion)
+      val containerHome = "/dapeng-container"
+      run("mkdir", "-p", containerHome)
+      run("mkdir", "-p", "/apps/" + projectName)
+      run("chmod", "+x", containerHome + "/bin/startup.sh")
+      workDir(containerHome + "/bin")
+
+      copy(appDependency, containerHome + "/apps/" + projectName + "/")
+
+      //cmd("/bin/sh", "-c", containerHome + "/bin/startup.sh && tail -F " + containerHome + "/bin/startup.sh")
+      //使用此命令启动容器 可以使1号线程为应用进程，可以监控到SIGTERM信号，捕捉到该信号进行优雅的关闭容器
+      entryPoint(containerHome + "/bin/startup.sh")
+    }
+  }
+
+
+  /**
+    * 递归删除docker文件夹
+    *
+    * @param dockerFile
+    */
+  def deleteFile(dockerFile: File): Unit = {
+    val fileList = dockerFile.listFiles
+    for (file <- fileList) {
+      if (file.isDirectory) {
+        deleteFile(file)
+      } else {
+        file.delete()
+      }
+    }
+  }
 }
 
