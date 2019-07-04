@@ -1,7 +1,6 @@
 package com.github.dapeng.plugins
 
 import com.github.dapeng.code.Scrooge
-
 import sbt.AutoPlugin
 import sbt.Keys.{resourceGenerators, _}
 import sbt._
@@ -13,7 +12,7 @@ import java.io.File
 object ThriftGeneratorPlugin extends AutoPlugin {
 
 
-  val generateFiles = taskKey[(Seq[File], Seq[File])]("generate thrift file sources")
+  val generateFiles = taskKey[(Seq[File],Seq[File])]("generate thrift file sources")
   val resourceGenerateFiles = taskKey[Seq[java.io.File]]("generate thrift file sources")
 
   def generateSourceFilesTask = Def.task {
@@ -46,10 +45,10 @@ object ThriftGeneratorPlugin extends AutoPlugin {
       allGenerated.map { file =>
         val path = file.getAbsolutePath
 
-        if (path.startsWith(javaPrefix)) {
+        if(path.startsWith(javaPrefix)){
           (file, path.substring(javaPrefix.length))
         }
-        else if (path.startsWith(scalaPrefix)) {
+        else if(path.startsWith(scalaPrefix)){
           (file, path.substring(scalaPrefix.length))
         }
         else (file, path)
@@ -59,23 +58,6 @@ object ThriftGeneratorPlugin extends AutoPlugin {
   ))
 
 
-  def recursionThriftGenerator(sourceFilePath: String, srcManagedPath: String): Unit = {
-
-    println(s" sourceFilePath: ${sourceFilePath}")
-
-    val file = new File(sourceFilePath)
-    Scrooge.main(Array("-gen", "java", "-all",
-      "-in", sourceFilePath,
-      "-out", srcManagedPath))
-
-    Scrooge.main(Array("-gen", "scala", "-all",
-      "-in", sourceFilePath,
-      "-out", srcManagedPath))
-    for (files <- file.listFiles() if files.isDirectory) {
-      recursionThriftGenerator(sourceFilePath +File.separator+ files.name, srcManagedPath);
-    }
-  }
-
   def generateFiles(sourceFilePath: String, srcManagedPath: String, resourceManagedPath: String) = {
 
     println("Welcome to use generate plugin")
@@ -84,33 +66,28 @@ object ThriftGeneratorPlugin extends AutoPlugin {
 
     if (needRegenerateFile(sourceFilePath: String, srcManagedPath: String, resourceManagedPath: String)) {
       if (!javaFileFolder.exists()) {
-        println(s" java file folder does no exists. create new one: ${
-          javaFileFolder
-        }")
+        println(s" java file folder does no exists. create new one: ${javaFileFolder}")
         javaFileFolder.mkdirs()
       }
+      Scrooge.main(Array("-gen", "java", "-all",
+        "-in", sourceFilePath,
+        "-out", srcManagedPath))
 
       if (!scalaFileFolder.exists()) {
-        println(s" scala file folder does no exists. create new one: ${
-          scalaFileFolder
-        }")
+        println(s" java file folder does no exists. create new one: ${scalaFileFolder}")
         scalaFileFolder.mkdirs()
       }
+      Scrooge.main(Array("-gen", "scala", "-all",
+        "-in", sourceFilePath,
+        "-out", srcManagedPath))
 
-
-      recursionThriftGenerator(sourceFilePath, srcManagedPath)
-
-      val oldResourceFile = new File(s"${
-        srcManagedPath
-      }/resources")
+      val oldResourceFile = new File(s"${srcManagedPath}/resources")
       val resourceFiles = getFiles(oldResourceFile)
       val newResourcePath = resourceManagedPath
 
       resourceFiles.foreach(oldFile => {
-        val newFile = new File(newResourcePath + s"/${
-          oldFile.getName
-        }")
-        IO.copy(Traversable((oldFile, newFile)), CopyOptions(true, false, false))
+        val newFile = new File(newResourcePath + s"/${oldFile.getName}")
+        IO.copy(Traversable((oldFile, newFile)), CopyOptions(true,false,false))
 
         // fixed at 2018-04-26 with no-override options, it will report CreateFile 32 error on windows 10.
         //IO.copy(Traversable((oldFile, newFile)))
@@ -147,7 +124,6 @@ object ThriftGeneratorPlugin extends AutoPlugin {
     * 4. 如果 sourceFilePath 没有java文件或者 scala文件 => need regen
     * 5. 如果 sourceFiles 任一修改时间 > (resourceFile + targetFiles) 的时间 => need regen
     * 6. else false
-    *
     * @param sourceFilePath
     * @param targetFilePath
     * @param resourceFilePath
@@ -157,16 +133,13 @@ object ThriftGeneratorPlugin extends AutoPlugin {
     val targetFileFolder = new File(targetFilePath)
     val resourceFileFolder = new File(resourceFilePath)
 
-    val needRegenerateFile: Boolean = if (!sourceFolder.exists()) {
-      //1.如果 targetFilePath 不存在  => need regen
+    val needRegenerateFile: Boolean = if (!sourceFolder.exists()) { //1.如果 targetFilePath 不存在  => need regen
       println(" sourceFolder not exists: regenerate sourceFiles............")
       true
-    } else if (!resourceFileFolder.exists()) {
-      //2.如果 resourceFilePath 不存在 => need regen
+    } else if (!resourceFileFolder.exists()) { //2.如果 resourceFilePath 不存在 => need regen
       println(" resourceFileFolder not exists: regenerate sourceFiles............")
       true
-    } else if (getFiles(resourceFileFolder).filter(_.getName.endsWith(".xml")).size <= 0) {
-      //3. 如果 resourceFilePath 没有xml 文件 => need regen
+    } else if (getFiles(resourceFileFolder).filter(_.getName.endsWith(".xml")).size <= 0) { //3. 如果 resourceFilePath 没有xml 文件 => need regen
       println(" resourceFileFolder not exists xml files: regenerate sourceFiles............")
       true
     } else {
